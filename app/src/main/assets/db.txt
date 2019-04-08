@@ -1,0 +1,3 @@
+Maltodextrina;1
+Ácido Lático;2
+Inosinato dissódico;3

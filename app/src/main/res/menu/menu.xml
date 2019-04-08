@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/mnuAddCity"
+        android:title="Novo"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/mnuClear"
+        android:title="Limpar"
+        app:showAsAction="never"/>
+
+</menu>
