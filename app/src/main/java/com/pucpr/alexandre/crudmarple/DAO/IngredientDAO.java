@@ -1,6 +1,10 @@
 package com.pucpr.alexandre.crudmarple.DAO;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,104 +20,113 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IngredientDAO {
+public class IngredientDAO extends SQLiteOpenHelper {
 
-    public List<Ingredient> loadDataFromAppFolder(Context context) {
+    private static final String DB_NAME = "ingredients.sqlite";
+    private static final int DB_VERSION = 1;
 
-        List<Ingredient> ingredients = new ArrayList<>();
-        try {
-            String line;
-            InputStream inputStream = context.openFileInput("db.txt");
-            InputStreamReader streamReader = new InputStreamReader(inputStream);
-            BufferedReader reader = new BufferedReader(streamReader);
+    private static final String DB_TABLE = "tblIngredient";
+    private static final String COL_ID = "id";
+    private static final String COL_NAME = "name";
+    private static final String COL_PRIORITY = "priority";
 
-            while ((line = reader.readLine()) != null) {
-                String attr[] = line.split(";", 0);
-                ingredients.add(new Ingredient(attr[0], Integer.parseInt(attr[1])));
-            }
-            reader.close();
-            streamReader.close();
-            inputStream.close();
-            return ingredients;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ingredients;
+    private Context context;
+
+    public IngredientDAO(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+
+        this.context = context;
     }
 
+    @Override
+    public void onCreate(SQLiteDatabase db) {
 
-    public List<Ingredient> loadDataFromAssets(Context context) {
-        List<Ingredient> ingredients = new ArrayList<>();
-        try {
-            String line;
-            InputStream inputStream = context.getAssets().open("db.txt");
-            InputStreamReader streamReader = new InputStreamReader(inputStream);
-            BufferedReader reader = new BufferedReader(streamReader);
-
-            while ((line = reader.readLine()) != null) {
-
-                String attr[] = line.split(";", 0);
-                ingredients.add(new Ingredient(attr[0], Integer.parseInt(attr[1])));
-            }
-            saveData(context, ingredients);
-            reader.close();
-            streamReader.close();
-            inputStream.close();
-            return ingredients;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return ingredients;
+        String sql = "CREATE TABLE IF NOT EXISTS " + DB_TABLE + "(" +
+                COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COL_NAME + " TEXT, " +
+                COL_PRIORITY + " INTEGER);";
+        db.execSQL(sql);
+        Toast.makeText(context, sql, Toast.LENGTH_LONG).show();
     }
 
-    public boolean saveData(Context context, List<Ingredient> ingredients) {
-        String str = "";
-        try {
-            OutputStream outputStream = context.openFileOutput("db.txt", Context.MODE_PRIVATE);
-            OutputStreamWriter writer = new OutputStreamWriter(outputStream);
-            for(Ingredient ingredient : ingredients){
-                str += ingredient.getName() + ";" + ingredient.getPriority() + "\n";
-            }
-            writer.write(str);
-            writer.flush();
-            writer.close();
-            outputStream.close();
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+    }
+
+    public boolean insert(Ingredient ingredient) {
+
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(COL_NAME, ingredient.getName());
+        values.put(COL_PRIORITY, ingredient.getPriority());
+
+        long id = db.insert(DB_TABLE, "", values);
+        db.close();
+
+        if (id > 0) {
+            ingredient.setId(id);
             return true;
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
         return false;
     }
 
-    public List<Ingredient> loadData(Context context) {
-        List<Ingredient> ingredients = loadDataFromAppFolder(context);
-        if (!ingredients.isEmpty()) {
-            Toast.makeText(
-                    context,
-                    "Usando pasta raíz",
-                    Toast.LENGTH_LONG).show();
-            return loadDataFromAppFolder(context);
-        } else {
-            ingredients = loadDataFromAssets(context);
-            if (!ingredients.isEmpty()) {
-                Toast.makeText(
-                        context,
-                        "Usando assets",
-                        Toast.LENGTH_LONG).show();
-                return loadDataFromAssets(context);
-            } else {
-                Toast.makeText(
-                        context,
-                        "Dados não encontrados",
-                        Toast.LENGTH_LONG).show();
-                return null;
-            }
+    public int remove(Ingredient ingredient) {
+
+        SQLiteDatabase db = getWritableDatabase();
+
+        String id = String.valueOf(ingredient.getId());
+        int count = db.delete(DB_TABLE, "id=?", new String[]{id});
+        db.close();
+
+        return count;
+    }
+
+    public int update(Ingredient ingredient) {
+
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(COL_NAME, ingredient.getName());
+        values.put(COL_PRIORITY, ingredient.getPriority());
+
+        String id = String.valueOf(ingredient.getId());
+
+        int count = db.update(DB_TABLE, values, "id=?", new String[]{id});
+        db.close();
+
+        return count;
+    }
+
+    public List<Ingredient> getAll() {
+
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.query(
+                DB_TABLE,
+                null,
+                null,
+                null,
+                null,
+                null,
+                COL_NAME + " COLLATE NOCASE");
+        List<Ingredient> ingredients = new ArrayList<>();
+        if (cursor.moveToFirst()) {
+            do {
+                Ingredient ingredient = new Ingredient(
+                        cursor.getString(cursor.getColumnIndex(COL_NAME)),
+                        cursor.getInt(cursor.getColumnIndex(COL_PRIORITY))
+                );
+                ingredient.setId(cursor.getInt(cursor.getColumnIndex(COL_ID)));
+                ingredients.add(ingredient);
+            } while (cursor.moveToNext());
         }
+
+        db.close();
+
+        return ingredients;
     }
 
 }

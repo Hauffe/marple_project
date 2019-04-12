@@ -17,7 +17,7 @@ public class AddEditIngredient extends AppCompatActivity {
     private int POSITION = -1;
     private TextView txtTitle;
     private EditText txtIngredient, txtPriority;
-    private Ingredient ingredient;
+    private Ingredient new_ingredient;
 
 
     @Override
@@ -29,16 +29,16 @@ public class AddEditIngredient extends AppCompatActivity {
         txtIngredient = findViewById(R.id.txtIngredient);
         txtPriority = findViewById(R.id.txtPriority);
 
-            POSITION = getIntent().getIntExtra("position", -1);
+        POSITION = getIntent().getIntExtra("position", -1);
 
         if (POSITION == -1) {
             txtTitle.setText("Novo Ingrediente");
-            ingredient = new Ingredient("", 0);
+            new_ingredient = new Ingredient("", 0);
         } else {
             txtTitle.setText("Editar Ingrediente");
-            ingredient = IngredientDTO.sharedInstance().getIngredient(POSITION);
-            txtIngredient.setText(ingredient.getName());
-            txtPriority.setText(String.valueOf(ingredient.getPriority()));
+            new_ingredient = IngredientDTO.sharedInstance().getIngredients().get(POSITION);
+            txtIngredient.setText(new_ingredient.getName());
+            txtPriority.setText(String.valueOf(new_ingredient.getPriority()));
         }
     }
 
@@ -50,12 +50,13 @@ public class AddEditIngredient extends AppCompatActivity {
 
     public void btnSaveOnClick(View v) {
 
-        ingredient = new Ingredient(txtIngredient.getText().toString(), Integer.parseInt(txtPriority.getText().toString()));
-
+        new_ingredient = new Ingredient(txtIngredient.getText().toString(), Integer.parseInt(txtPriority.getText().toString()));
         if (POSITION == -1) {
-            IngredientDTO.sharedInstance().addIngredient(ingredient);
+            IngredientDTO.sharedInstance().addIngredient(new_ingredient);
         } else {
-            IngredientDTO.sharedInstance().editIngredient(ingredient, POSITION);
+            new_ingredient.setId(IngredientDTO.sharedInstance().getIngredients().get(POSITION).getId());
+            IngredientDTO.sharedInstance().editIngredient(new_ingredient, POSITION);
+
         }
 
         //setResult(RESULT_OK);

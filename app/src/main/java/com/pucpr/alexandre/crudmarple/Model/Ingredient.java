@@ -2,6 +2,7 @@ package com.pucpr.alexandre.crudmarple.Model;
 
 public class Ingredient {
 
+    private long id;
     private String name;
     private Integer priority;
 
@@ -24,6 +25,14 @@ public class Ingredient {
 
     public void setPriority(Integer priority) {
         this.priority = priority;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
     }
 }
 
